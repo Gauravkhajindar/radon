@@ -7,8 +7,28 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+const midGlb = function (req,res,next){
+    console.log("hi I am a Global middleware");
+    next()
+}
+const middeleware = function (req,res,next){
+    var currentdate = new Date(); 
+    var datetime = "Last Sync: " + currentdate.getDate() + "/"
+                    + (currentdate.getMonth()+1)  + "/" 
+                    + currentdate.getFullYear() + " @ "  
+                    + currentdate.getHours() + ":"  
+                    + currentdate.getMinutes() + ":" 
+                    + currentdate.getSeconds();
+    let ip = req.ip
+    let url= req.originalUrl
+    console.log(`${datetime} ${ip} ${url}`)
+    next()
+}
 
-mongoose.connect("mongodb+srv://functionup-cohort:G0Loxqc9wFEGyEeJ@cluster0.rzotr.mongodb.net/Pritesh8769811-DB?retryWrites=true&w=majority", {
+app.use(middeleware)
+
+
+mongoose.connect("mongodb+srv://Gauravkhajindar:WWKCSP1WrPINTgvo@cluster0.2q2wy.mongodb.net/?retryWrites=true&w=majority", {
     useNewUrlParser: true
 })
 .then( () => console.log("MongoDb is connected"))
@@ -27,3 +47,7 @@ app.use('/', route);
 app.listen(process.env.PORT || 3000, function () {
     console.log('Express app running on port ' + (process.env.PORT || 3000))
 });
+
+
+
+
