@@ -4,22 +4,34 @@ const userModel = require("../models/userModel");
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>createUser>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 const createUser = async function (abcd, xyz) {
+
+  try {
   //You can name the req, res objects anything.
   //but the first parameter is always the request 
   //the second parameter is always the response
   let data = abcd.body;
   let savedData = await userModel.create(data);
   console.log(abcd.newAtribute);
-  xyz.send({ msg: savedData });
+  xyz.status(201).send({ msg: savedData }); 
+
+  // 201 new user created
+} catch (err) {
+  console.log("This is the error :", err.message)
+  xyz.status(500).send({ msg: "Error", error: err.message })
+}
+  // 500 - SERVER ERROR
 };
 // >>>>>>>>>>>>>>>>>>>>>>>>>loginUser>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 const loginUser = async function (req, res) {
+
+  try {
   let userName = req.body.emailId;
   let password = req.body.password;
 
   let user = await userModel.findOne({ emailId: userName, password: password });
   if (!user)
-    return res.send({
+    return res.status(403).send({
+      // 403 - Forbidden
       status: false,
       msg: "username or the password is not corerct",
     });
@@ -40,15 +52,23 @@ const loginUser = async function (req, res) {
   );
   res.setHeader("x-auth-token", token);
   res.send({ status: true, token: token });
+
+} catch (err) {
+  console.log("This is the error :", err.message)
+  res.status(500).send({ msg: "Error", error: err.message })
+}
+// 500 - SERVER ERROR
 };
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>getUserData>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 const getUserData = async function (req, res) {
+
+  try {
   let token = req.headers["x-Auth-token"];
   if (!token) token = req.headers["x-auth-token"];
 
   //If no token is present in the request header return error
-  if (!token) return res.send({ status: false, msg: "token must be present" });
-
+  if (!token) return res.status(401).send({ status: false, msg: "token must be present" });
+// 401 - lacks valid authentication
   console.log(token);
   
   // If a token is present then decode the token with verify function
@@ -58,17 +78,25 @@ const getUserData = async function (req, res) {
   // Check the value of the decoded token yourself
   let decodedToken = jwt.verify(token, "functionup-radon");
   if (!decodedToken)
-    return res.send({ status: false, msg: "token is invalid" });
-
+    return res.status(401).send({ status: false, msg: "token is invalid" });
+// 401 - lacks valid authentication
   let userId = req.params.userId;
   let userDetails = await userModel.findById(userId);
   if (!userDetails)
-    return res.send({ status: false, msg: "No such user exists" });
-
+    return res.status(404).send({ status: false, msg: "No such user exists" });
+// 404 result not found
   res.send({ status: true, data: userDetails });
+
+} catch (err) {
+  console.log("This is the error :", err.message)
+  res.status(500).send({ msg: "Error", error: err.message })
+}
+// 500 - SERVER ERROR
 };
 // >>>>>>>>>>>>>>>>>>>>>>>>>updateUser>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 const updateUser = async function (req, res) {
+
+  try {
 // Do the same steps here:
 // Check if the token is present
 // Check if the token present is a valid token
@@ -78,23 +106,32 @@ const updateUser = async function (req, res) {
   let user = await userModel.findById(userId);
   //Return an error if no user with the given id exists in the db
   if (!user) {
-    return res.send("No such user exists");
+    return res.status(404).send("No such user exists");
+ // 404 result not found
   }
 
   let userData = req.body;
   let updatedUser = await userModel.findOneAndUpdate({ _id: userId }, userData,{new:true});
   res.send({ status: updatedUser, data: updatedUser });
+
+} catch (err) {
+  console.log("This is the error :", err.message)
+  res.status(500).send({ msg: "Error", error: err.message })
+}
+// 500 - SERVER ERROR
 };
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>postMessage>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 const postMessage = async function (req, res) {
+
+  try {
   let message = req.body.message
   // Check if the token is present
   // Check if the token present is a valid token
   // Return a different error message in both these cases
   
   let user = await userModel.findById(req.params.userId)
-  if(!user) return res.send({status: false, msg: 'No such user exists'})
-  
+  if(!user) return res.status(404).send({status: false, msg: 'No such user exists'})
+  // 404 result not found
   let updatedPosts = user.posts
   //add the message to user's posts
   updatedPosts.push(message)
@@ -102,6 +139,12 @@ const postMessage = async function (req, res) {
 
   //return the updated user document
   return res.send({status: true, data: updatedUser})
+
+} catch (err) {
+  console.log("This is the error :", err.message)
+  res.status(500).send({ msg: "Error", error: err.message })
+}
+// 500 - SERVER ERROR
 }
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Deleteuser>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 const  Deleteuser= async function (req, res) {
@@ -110,11 +153,13 @@ const  Deleteuser= async function (req, res) {
   // Check if the token present is a valid token
   // Return a different error message in both these cases
   
+  try {
     let userId = req.params.userId;
     let user = await userModel.findById(userId);
     //Return an error if no user with the given id exists in the db
     if (!user) {
-      return res.send("No such user exists");
+      return res.status(404).send("No such user exists");
+    // 404 result not found
     }
   
     
@@ -123,6 +168,12 @@ const  Deleteuser= async function (req, res) {
     if (updatedUser.isDeleted==true){
       return res.send("user already deleted")
     }
+
+  } catch (err) {
+    console.log("This is the error :", err.message)
+    res.status(500).send({ msg: "Error", error: err.message })
+  }
+  // 500 - SERVER ERROR
   };
 
 module.exports.createUser = createUser;
